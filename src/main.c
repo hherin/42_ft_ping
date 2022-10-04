@@ -35,7 +35,7 @@ int main(int ac, char **av)
     if (getaddrinfo(av[1], "", NULL, &(inet_info)) ==  EAI_NONAME)
         str_exit_error("Name or service not known\n");
 
-    int sockfd = socket(AF_INET, SOCK_RAW, 0);
+    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
     signal(SIGINT, ping_end_signal);
 
@@ -52,8 +52,11 @@ int main(int ac, char **av)
         printf("sum = %u - size %ld\n", cksum, sizeof(head));
         // (USHORT)*(head + 2) = cksum;
         printf("send the message\n");
-        sendto(sockfd, head, sizeof(head), MSG_CONFIRM, inet_info->ai_addr, sizeof(inet_info->ai_addr));
-        printf("Wait for recvmsg...\n");
+        if (sendto(sockfd, head, sizeof(head), MSG_CONFIRM, inet_info->ai_addr, sizeof(inet_info->ai_addr)) < 0 )
+            print("error in sendto\n");
+        else
+            printf("Wait for recvmsg...\n");
+            
         struct msghdr msg;
         // char recvbuffer[256];
         // struct iovec iov[1];
@@ -61,8 +64,10 @@ int main(int ac, char **av)
         // iov[0].iov_len = sizeof(recvbuffer);
         // msg.msg_iov = iov;
         // msg.msg_iov_len = sizeof(iov);
-        recvmsg(sockfd, &msg, 0);
-        printf("Message received!\n");
+        if (recvmsg(sockfd, &msg, 0) < 0)
+            printf("error in recvmsg\n");
+        else
+            printf("Message received!\n");
     // } while (1);
     
     freeaddrinfo(inet_info);
