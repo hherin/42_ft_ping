@@ -9,9 +9,12 @@
 # include <arpa/inet.h>
 # include "../lib/inc/libft.h"
 # include <signal.h>
+# include <errno.h>
 
 # define UCHAR unsigned char
 # define USHORT unsigned short
+# define UINT unsigned int
+
 
 typedef struct s_icmp_header
 {
@@ -24,5 +27,8 @@ typedef struct s_icmp_header
 
 void str_exit_error(char *str);
 void ping_end_signal(int nb);
+USHORT CheckSum(UCHAR *msg, int len);
+
+void icmp_ping_loop(int sockfd, struct addrinfo *sa, pid_t pid, char *srcname);
 
 #endif

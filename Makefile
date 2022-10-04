@@ -1,7 +1,8 @@
 NAME=	ft_ping
 
 SRC=	./src/main.c \
-		./src/utils.c
+		./src/utils.c \
+		./src/ping_loop.c
 
 OBJ=	${SRC:.c=.o}
 
