@@ -10,25 +10,41 @@
 # include "../lib/inc/libft.h"
 # include <signal.h>
 # include <errno.h>
+# include <sys/time.h>
 
 # define UCHAR unsigned char
 # define USHORT unsigned short
 # define UINT unsigned int
 
+# define TTL 1
 
-typedef struct s_icmp_header
+typedef struct s_icmp_stat
 {
-    UCHAR  type;
-    UCHAR  code;
-    USHORT somme;
-    USHORT id;
-    USHORT seq_nu;
-}   icmpping_header;
+    USHORT transmitted;
+    USHORT received;
+    struct timeval time;
+}   t_icmp_stat;
+
+typedef struct 
+{
+    t_icmp_stat stat;
+    char *srvname;
+    int sockfd;
+    struct addrinfo *adinfo;
+    pid_t pid;
+}       t_icmp_echo;
+
+
+extern t_icmp_echo icmp;
 
 void str_exit_error(char *str);
 void ping_end_signal(int nb);
+void my_sleep(int nb);
 USHORT CheckSum(UCHAR *msg, int len);
 
+void icmp_recvmsg(int sockfd);
+
 void icmp_ping_loop(int sockfd, struct addrinfo *sa, pid_t pid, char *srcname);
+int icmp_sendto(int sockfd, struct addrinfo *sa, pid_t pid);
 
 #endif

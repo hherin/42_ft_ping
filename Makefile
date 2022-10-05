@@ -2,13 +2,18 @@ NAME=	ft_ping
 
 SRC=	./src/main.c \
 		./src/utils.c \
-		./src/ping_loop.c
+		./src/ping_loop.c \
+		./src/recv.c
 
 OBJ=	${SRC:.c=.o}
+
+HDRS=	./inc/ft_ping.h
 
 CFLAG=	-g3 -fsanitize=address -Wall -Werror -Wextra
 
 all: ${NAME}
+
+${OBJ} : ${HDRS}
 
 %.o:%.c
 	gcc ${CFLAG} -o $@ -c $<

@@ -1,17 +1,22 @@
 #include "../inc/ft_ping.h"
 
+t_icmp_echo icmp = {
+    .stat = {    .transmitted = 0,
+                .received = 0,
+                .time.tv_sec = 0,
+                .time.tv_usec = 0 },
+    .srvname = NULL,
+    .sockfd = -1,
+    .adinfo = NULL,
+    .pid = -1
+};
 
-int main(int ac, char **av)
+void server_setup()
 {
-    if (ac != 2)
-        str_exit_error("Destination address required\n");
-
-    struct addrinfo *inet_info;
-    int sockfd;
-    int ttl = 64;
-    long pid = getpid();
-    signal(SIGINT, ping_end_signal);
-
+    int ttl = TTL;
+    icmp.pid = getpid();
+    
+    
     int retaddrinfo;
     struct addrinfo hints;
     ft_bzero(&hints, sizeof(hints));
@@ -19,22 +24,32 @@ int main(int ac, char **av)
     hints.ai_socktype = SOCK_RAW;
     hints.ai_protocol = IPPROTO_ICMP;
     hints.ai_flags = 0;
-    if ((retaddrinfo = getaddrinfo(av[1], "", &hints, &(inet_info))) !=  0){
-        fprintf(stderr, "ping: %s: %s\n", av[1], gai_strerror(retaddrinfo));
+    if ((retaddrinfo = getaddrinfo(icmp.srvname, "", &hints, &(icmp.adinfo))) !=  0){
+        fprintf(stderr, "ping: %s: %s\n", icmp.srvname, gai_strerror(retaddrinfo));
         exit(1);
     }
     
-    
-    if ((sockfd = socket(AF_INET, SOCK_RAW, 1)) < 0) {
-        fprintf(stderr, "Error socket: %s\n", gai_strerror(sockfd));
+    if ((icmp.sockfd = socket(AF_INET, SOCK_RAW, 1)) < 0) {
+        fprintf(stderr, "Error socket: %s\n", strerror(errno));
         exit(1);
     }
-    setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+    setsockopt(icmp.sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+}
+
+int main(int ac, char **av)
+{
+    if (ac != 2)
+        str_exit_error("Destination address required\n");
+
+    signal(SIGINT, ping_end_signal);
+    icmp.srvname = av[1];
+
+    server_setup();
     
-    icmp_ping_loop(sockfd, inet_info, pid, av[1]);
+    icmp_ping_loop(icmp.sockfd, icmp.adinfo, icmp.pid, av[1]);
     
-    freeaddrinfo(inet_info);
-    close(sockfd);
+    freeaddrinfo(icmp.adinfo);
+    close(icmp.sockfd);
 
     return 0;
 }
