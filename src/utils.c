@@ -10,13 +10,20 @@ void str_exit_error(char *str)
 void ping_end_signal(int nb)
 {
     (void)nb;
+    struct timeval endtime;
+    struct msghdr msg;
+
+    if (recvmsg(icmp.sockfd, &msg, MSG_DONTWAIT))
+        icmp.stat.transmitted--;
+    
+    gettimeofday(&endtime, NULL);
     printf("\n--- %s ping statistics ---\n", icmp.srvname);
     
-    struct timeval endtime;
-    gettimeofday(&endtime, NULL);
-    long time_elapsed = (endtime.tv_sec * 1000 + endtime.tv_usec / 1000)- (icmp.stat.time.tv_sec * 1000 + icmp.stat.time.tv_usec / 1000);
-    int loss = (!icmp.stat.received) ? 100.0 : (int)(icmp.stat.transmitted / icmp.stat.received);
+    long time_elapsed = (endtime.tv_sec * 1000 + endtime.tv_usec / 1000)- (icmp.stat.ping_start.tv_sec * 1000 + icmp.stat.ping_start.tv_usec / 1000);
+    int loss = (int)((1 - ((float)icmp.stat.received / (float)icmp.stat.transmitted)) * 100);
     printf("%d packets transmitted, %d received, %d%% packet loss, time %ldms\n", icmp.stat.transmitted, icmp.stat.received, loss, time_elapsed);
+    printf("rtt min/avg/max/mdev = \n");
+    close(icmp.sockfd);
     exit(1);
 }
 
@@ -46,4 +53,15 @@ void my_sleep(int nb)
         if (tmp.tv_sec - time.tv_sec >= nb)
             break;
     }
+}
+
+long set_time_from_start(void)
+{
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    
+    long start_ms = icmp.stat.ping_start.tv_sec * 1000 + icmp.stat.ping_start.tv_usec / 1000;
+    long now_ms = now.tv_sec * 1000 + now.tv_usec / 1000;
+    printf("ms %ld\n", now_ms - start_ms);
+    return now_ms - start_ms;
 }

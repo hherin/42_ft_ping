@@ -3,8 +3,8 @@
 t_icmp_echo icmp = {
     .stat = {    .transmitted = 0,
                 .received = 0,
-                .time.tv_sec = 0,
-                .time.tv_usec = 0 },
+                .ping_start.tv_sec = 0,
+                .ping_start.tv_usec = 0 },
     .srvname = NULL,
     .sockfd = -1,
     .adinfo = NULL,
