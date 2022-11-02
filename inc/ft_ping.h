@@ -31,7 +31,7 @@ typedef struct s_icmp_stat
     USHORT transmitted;
     USHORT received;
     struct timeval ping_start;
-    long send_ms;
+    struct timeval send_ms;
     
 }   t_icmp_stat;
 
@@ -45,17 +45,22 @@ typedef struct
 }       t_icmp_echo;
 
 
-extern t_icmp_echo icmp;
+extern t_icmp_echo g_icmp;
+
+void icmp_ping_loop(char *srcname);
 
 void str_exit_error(char *str);
 void ping_end_signal(int nb);
-void my_sleep(int nb);
-long set_time_from_start(void);
+void sig_send_handler(int signum);
 USHORT CheckSum(UCHAR *msg, int len);
+long get_time_from_start(void);
+
+void set_rtt_stat(void);
+void print_stats(void);
 
 int icmp_recvmsg(int sockfd);
 
-void icmp_ping_loop(int sockfd, struct addrinfo *sa, pid_t pid, char *srcname);
 int icmp_sendto(int sockfd, struct addrinfo *sa, pid_t pid);
+
 
 #endif

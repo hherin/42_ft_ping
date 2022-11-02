@@ -1,40 +1,20 @@
 #include "../inc/ft_ping.h"
 
-int icmp_sendto(int sockfd, struct addrinfo *sa, pid_t pid)
+
+
+void icmp_ping_loop(char *srcname)
 {
-    struct icmphdr icmp_hdr;
-    static int seq = 0;
-    int ret;
+    signal(SIGALRM, sig_send_handler);
     
-    ft_bzero((UCHAR*)(&icmp_hdr), sizeof(icmp_hdr));
-    icmp_hdr.type = ICMP_ECHO;
-    icmp_hdr.code = 0U;
-    icmp_hdr.un.echo.id = pid;
-    icmp_hdr.un.echo.sequence = seq++;
-   
-    icmp_hdr.checksum = CheckSum((UCHAR*)(&icmp_hdr), sizeof(icmp_hdr));
-
-    if ((ret = sendto(sockfd, &icmp_hdr, sizeof(icmp_hdr), 0, sa->ai_addr, sizeof(*(sa->ai_addr)))) < 0){
-        fprintf(stderr, "error in sendto %s\n", strerror(errno));
-        exit(1);
-    }
-
-    printf("send => ");
-    icmp.stat.send_ms = set_time_from_start();
-    icmp.stat.transmitted++;
+    gettimeofday(&g_icmp.stat.ping_start, NULL);
     
-    return ret;
-}
-
-void icmp_ping_loop(int sockfd, struct addrinfo *sa, pid_t pid, char *srcname)
-{
-    gettimeofday(&icmp.stat.ping_start, NULL);
     char dst[INET_ADDRSTRLEN];
-    struct sockaddr_in *sin = (struct sockaddr_in*)sa->ai_addr;
+    struct sockaddr_in *sin = (struct sockaddr_in*)g_icmp.adinfo->ai_addr;
+
     printf("PING %s (%s) 56(84) bytes of data\n", srcname, inet_ntop(AF_INET, &sin->sin_addr, dst, INET_ADDRSTRLEN));
+    
+    alarm(1);
     do {
-        icmp_sendto(sockfd, sa, pid);
-        my_sleep(1);
-        icmp_recvmsg(sockfd);       
+        icmp_recvmsg(g_icmp.sockfd);
     } while (1);
 }

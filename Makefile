@@ -3,7 +3,9 @@ NAME=	ft_ping
 SRC=	./src/main.c \
 		./src/utils.c \
 		./src/ping_loop.c \
-		./src/recv.c
+		./src/recv.c \
+		./src/send.c \
+		./src/stats.c
 
 OBJ=	${SRC:.c=.o}
 

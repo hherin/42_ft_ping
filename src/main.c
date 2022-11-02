@@ -1,6 +1,6 @@
 #include "../inc/ft_ping.h"
 
-t_icmp_echo icmp = {
+t_icmp_echo g_icmp = {
     .stat = {    .transmitted = 0,
                 .received = 0,
                 .ping_start.tv_sec = 0,
@@ -14,7 +14,7 @@ t_icmp_echo icmp = {
 void server_setup()
 {
     int ttl = TTL;
-    icmp.pid = getpid();
+    g_icmp.pid = getpid();
     
     
     int retaddrinfo;
@@ -24,16 +24,16 @@ void server_setup()
     hints.ai_socktype = SOCK_RAW;
     hints.ai_protocol = IPPROTO_ICMP;
     hints.ai_flags = 0;
-    if ((retaddrinfo = getaddrinfo(icmp.srvname, "", &hints, &(icmp.adinfo))) !=  0){
-        fprintf(stderr, "ping: %s: %s\n", icmp.srvname, gai_strerror(retaddrinfo));
+    if ((retaddrinfo = getaddrinfo(g_icmp.srvname, "", &hints, &(g_icmp.adinfo))) !=  0){
+        fprintf(stderr, "ping: %s: %s\n", g_icmp.srvname, gai_strerror(retaddrinfo));
         exit(1);
     }
     
-    if ((icmp.sockfd = socket(AF_INET, SOCK_RAW, 1)) < 0) {
+    if ((g_icmp.sockfd = socket(AF_INET, SOCK_RAW, 1)) < 0) {
         fprintf(stderr, "Error socket: %s\n", strerror(errno));
         exit(1);
     }
-    setsockopt(icmp.sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+    setsockopt(g_icmp.sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
 }
 
 int main(int ac, char **av)
@@ -42,14 +42,15 @@ int main(int ac, char **av)
         str_exit_error("Destination address required\n");
 
     signal(SIGINT, ping_end_signal);
-    icmp.srvname = av[1];
+    g_icmp.srvname = av[1];
 
     server_setup();
     
-    icmp_ping_loop(icmp.sockfd, icmp.adinfo, icmp.pid, av[1]);
+    icmp_ping_loop(av[1]);
     
-    freeaddrinfo(icmp.adinfo);
-    close(icmp.sockfd);
+    freeaddrinfo(g_icmp.adinfo);
+    close(g_icmp.sockfd);
 
     return 0;
 }
+
