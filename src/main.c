@@ -1,14 +1,24 @@
 #include "../inc/ft_ping.h"
 
 t_icmp_echo g_icmp = {
-    .stat = {    .transmitted = 0,
+    .stat = {    
+                .transmitted = 0,
                 .received = 0,
+                .min = 0.0,
+                .max = 0.0,
                 .ping_start.tv_sec = 0,
-                .ping_start.tv_usec = 0 },
+                .ping_start.tv_usec = 0 
+    },
     .srvname = NULL,
     .sockfd = -1,
     .adinfo = NULL,
-    .pid = -1
+    .pid = -1,
+    .lst = {
+                .seq = 0,
+                .next = NULL
+    },
+    .error = false,
+    .last_seq = 0
 };
 
 void server_setup()

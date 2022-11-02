@@ -1,29 +1,74 @@
 #include "../inc/ft_ping.h"
 
-void init_recv(struct packet *pck, struct msghdr *msg, struct iovec *iov, struct sockaddr_in *sin)
+static struct msghdr init_recv(void)
 {
-    ft_bzero(pck, sizeof(*pck));
+    struct msghdr msg={};
+    static struct ip iphdr;
+    static struct icmp icmphdr;
+    static struct sockaddr_in sin;
+    static struct iovec iov[2];
+    
     ft_bzero(iov, sizeof(iov));
-    ft_bzero(msg, sizeof(*msg));
+    ft_bzero(&iphdr, sizeof(iphdr));
+    ft_bzero(&icmphdr, sizeof(icmphdr));
+    ft_bzero(&sin, sizeof(sin));
 
-    iov[0].iov_base = pck;
-    iov[0].iov_len = sizeof(*pck);
+    iov[0].iov_base = &iphdr;
+    iov[0].iov_len = sizeof(iphdr);
+    iov[1].iov_base = &icmphdr;
+    iov[1].iov_len = sizeof(icmphdr);
 
-    msg->msg_name = sin;
-    msg->msg_namelen = sizeof(*sin);
-    msg->msg_iov = iov;
-    msg->msg_iovlen = 1;
+    msg.msg_name = &sin;
+    msg.msg_namelen = sizeof(sin);
+    msg.msg_iov = iov;
+    msg.msg_iovlen = 2;
+
+    return msg;
 }
+    
 
+static int process_received_packet(const struct iovec iov[2], const struct msghdr msg)
+{
+    struct ip *iphdr = iov[0].iov_base;
+    struct icmp *icmphdr = iov[1].iov_base;
+    
+    // printf("type %u cksum %u\n", icmphdr->icmp_type, icmphdr->icmp_cksum);
+
+        char dst[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &msg.msg_name, dst, INET_ADDRSTRLEN);
+        
+        switch (icmphdr->icmp_type) {
+            case ICMP_ECHOREPLY:
+                t_send_list *elem;
+                if (icmphdr->icmp_id != g_icmp.pid || !(elem = set_rtt_time(icmphdr->icmp_seq)))
+                    return 0;
+                    // check checksum
+
+                printf("64 bytes from %s (%s): icmp_seq=%d", g_icmp.srvname, dst, icmphdr->icmp_seq);
+                printf(" ttl=%d time=%.2fms\n", iphdr->ip_ttl, elem->rtt_time);
+                return 1;
+
+            case ICMP_DEST_UNREACH:
+                printf("64 bytes from %s (%s): icmp_seq=%d Packet filtered\n", g_icmp.srvname, dst, g_icmp.last_seq);
+                g_icmp.error = true;
+                return 0;
+
+            case ICMP_TIME_EXCEEDED:
+                printf("64 bytes from %s (%s): icmp_seq=%d Time to live exceeded\n", g_icmp.srvname, dst, g_icmp.last_seq);
+                g_icmp.error = true;
+                return 0;
+            
+        }
+        return 1;
+
+}
 
 int icmp_recvmsg(int sockfd)
 {
     struct msghdr msg;
-    struct iovec iov[1];
-    struct packet pck;
-    struct sockaddr_in sin;
-    
-    init_recv(&pck, &msg, iov, &sin);
+
+    msg = init_recv();
+
     if (recvmsg(sockfd, &msg, MSG_DONTWAIT) < 0){
         if (errno == EAGAIN)
             return 0;
@@ -31,16 +76,10 @@ int icmp_recvmsg(int sockfd)
         exit(1);
     }
     else {
-        // long recv_time = get_time_from_start();
-        struct timeval recv_ms;
-        gettmeofday(recv_ms, NULL);
-        printf("send sec=%d usec=%d\nrecv sec=%d usec=%d\n", \
-        g_icmp.stat.send_ms.tv_sec, g_icmp.stat.send_ms.tv_usec, recv_ms.tv_sec, recv_ms.tv_usec);
+        if (((struct ip*)(msg.msg_iov[0].iov_base))->ip_p == IPPROTO_ICMP)
+            if (!process_received_packet(msg.msg_iov, msg))
+                return 0;
         g_icmp.stat.received++;
-        set_rtt_stat();
-        char dst[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &sin.sin_addr, dst, INET_ADDRSTRLEN);
-        printf("64 bytes from %s (%s): icmp_seq=%d ttl=%d\n", g_icmp.srvname, dst, pck.icmp_hdr.un.echo.sequence, pck.ip_hdr.ttl);
     }
     return 1;
 }

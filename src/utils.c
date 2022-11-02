@@ -11,10 +11,6 @@ void ping_end_signal(int nb)
 {
     (void)nb;
     
-
-    // if (recvmsg(g_icmp.sockfd, &msg, MSG_DONTWAIT))
-    //     g_icmp.stat.transmitted--;
-    
     print_stats();
 
     close(g_icmp.sockfd);
@@ -37,14 +33,3 @@ USHORT CheckSum(UCHAR *msg, int len)
     return ~sum;
 }
 
-
-long get_time_from_start(void)
-{
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    
-    long start_ms = g_icmp.stat.ping_start.tv_sec * 1000 + g_icmp.stat.ping_start.tv_usec / 1000;
-    long now_ms = now.tv_sec * 1000 + now.tv_usec / 1000;
-    // printf("ms %ld\n", now_ms - start_ms);
-    return now_ms - start_ms;
-}

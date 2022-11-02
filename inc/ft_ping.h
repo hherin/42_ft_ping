@@ -13,6 +13,7 @@
 # include <sys/time.h>
 # include <netinet/ip_icmp.h>
 # include <netinet/ip.h>
+# include <stdbool.h>
 
 # define UCHAR unsigned char
 # define USHORT unsigned short
@@ -20,28 +21,42 @@
 
 # define TTL 64
 
+
 struct packet 
 {
-    struct iphdr ip_hdr;
-    struct icmphdr icmp_hdr;
+    struct ip iphdr;
+    struct icmp icmphdr;
 };
 
-typedef struct s_icmp_stat
+typedef struct list_rtt
 {
-    USHORT transmitted;
-    USHORT received;
-    struct timeval ping_start;
-    struct timeval send_ms;
-    
-}   t_icmp_stat;
+    UINT seq;
+    struct timeval sendtime;
+    float rtt_time;
+    struct list_rtt *next;
+}       t_send_list;
 
 typedef struct 
 {
-    t_icmp_stat stat;
     char *srvname;
     int sockfd;
     struct addrinfo *adinfo;
     pid_t pid;
+    t_send_list lst;
+    bool error;
+    struct ip iphdr;
+    struct icmp icmphdr;
+    UINT last_seq;
+    struct s_icmp_stat
+    {
+        USHORT transmitted;
+        USHORT received;
+        float min;
+        float max;
+        struct timeval ping_start;
+        struct timeval send_ms;
+    }   stat;
+
 }       t_icmp_echo;
 
 
@@ -53,9 +68,8 @@ void str_exit_error(char *str);
 void ping_end_signal(int nb);
 void sig_send_handler(int signum);
 USHORT CheckSum(UCHAR *msg, int len);
-long get_time_from_start(void);
 
-void set_rtt_stat(void);
+t_send_list* set_rtt_time(UINT seq);
 void print_stats(void);
 
 int icmp_recvmsg(int sockfd);
