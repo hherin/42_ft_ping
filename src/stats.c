@@ -87,7 +87,9 @@ void print_stats(void)
         printf("%d%% packet loss, time %ldms\n", loss, time_elapsed);
         float avg = compute_average();
         float mdev = compute_mdev(avg);
-        printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f\n", g_icmp.stat.min, avg, g_icmp.stat.max, mdev);
+        if (g_icmp.stat.received)
+            printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms", g_icmp.stat.min, avg, g_icmp.stat.max, mdev);
+        printf("\n");
     }
     else {
         printf("+%d errors, %d%% packet loss, time %ldms\n\n", g_icmp.error, loss, time_elapsed);

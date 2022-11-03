@@ -16,11 +16,11 @@ void free_everything(void)
         close(g_icmp.sockfd);
 }
 
-void str_exit_error(const char *s1, const char *s2)
+void str_exit_error(const char *s1, const char *s2, int exitcode)
 {
     fprintf(stderr, "ping: %s: %s\n", s1, s2);
     free_everything();
-    exit(1);
+    exit(exitcode);
 }
 
 void ping_end_signal(int nb)
@@ -30,7 +30,9 @@ void ping_end_signal(int nb)
     print_stats();
 
     close(g_icmp.sockfd);
-    exit(1);
+
+    int exitcode = (g_icmp.error || !g_icmp.stat.received) ? 1 : 0;
+    exit(exitcode);
 }
 
 USHORT CheckSum(UCHAR *msg, int len)

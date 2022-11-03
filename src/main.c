@@ -35,10 +35,10 @@ static void server_setup(void)
     hints.ai_protocol = IPPROTO_ICMP;
     hints.ai_flags = 0;
     if ((retaddrinfo = getaddrinfo(g_icmp.srvname, "", &hints, &(g_icmp.adinfo))) !=  0)
-        str_exit_error(g_icmp.srvname, gai_strerror(retaddrinfo));
+        str_exit_error(g_icmp.srvname, gai_strerror(retaddrinfo), 2);
     
     if ((g_icmp.sockfd = socket(AF_INET, SOCK_RAW, 1)) < 0)
-        str_exit_error("internal error", strerror(errno));
+        str_exit_error("internal error", strerror(errno), 1);
     
     setsockopt(g_icmp.sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
 }
@@ -57,7 +57,7 @@ static void parse_cmd(char **av)
     for (int i = 0; av[i]; i++) {
         if (av[i][0] != '-'){
             if (g_icmp.srvname)
-                str_exit_error("usage error", "one destination allowed, see help [-h]\n");
+                str_exit_error("usage error", "one destination allowed, see help [-h]", 1);
             g_icmp.srvname = av[i];
         }
         else {
@@ -72,7 +72,8 @@ static void parse_cmd(char **av)
                         break;
 
                     default:
-                        break;
+                        print_help();
+                        exit(2);
                 }
 
             }
@@ -85,7 +86,7 @@ static void parse_cmd(char **av)
 int main(int ac, char **av)
 {
     if (ac < 2)
-        str_exit_error("usage error", "Destination address required\n");
+        str_exit_error("usage error", "Destination address required", 1);
 
     signal(SIGINT, ping_end_signal);
 

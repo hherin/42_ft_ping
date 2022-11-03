@@ -79,7 +79,7 @@ int icmp_recvmsg(int sockfd)
     if (recvmsg(sockfd, &msg, MSG_DONTWAIT) < 0){
         if (errno == EAGAIN)
             return 0;
-        str_exit_error("internal error", strerror(errno));
+        str_exit_error("internal error", strerror(errno), 1);
     }
     else {
         if (((struct ip*)(msg.msg_iov[0].iov_base))->ip_p == IPPROTO_ICMP)

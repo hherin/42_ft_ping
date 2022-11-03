@@ -64,7 +64,7 @@ extern t_icmp_echo g_icmp;
 
 void icmp_ping_loop(char *srcname);
 
-void str_exit_error(const char *s1, const char *s2);
+void str_exit_error(const char *s1, const char *s2, int exitcode);
 void ping_end_signal(int nb);
 void free_everything(void);
 USHORT CheckSum(UCHAR *msg, int len);
