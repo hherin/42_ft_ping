@@ -27,7 +27,7 @@ static struct msghdr init_recv(void)
 }
     
 
-static int process_received_packet(const struct iovec iov[2], struct msghdr msg)
+static int process_received_packet(const struct iovec iov[2], const struct msghdr msg)
 {
     struct ip *iphdr = iov[0].iov_base;
     struct icmp *icmphdr = iov[1].iov_base;
@@ -37,19 +37,27 @@ static int process_received_packet(const struct iovec iov[2], struct msghdr msg)
     inet_ntop(AF_INET, &sin->sin_addr, dst, INET_ADDRSTRLEN);
     
     switch (icmphdr->icmp_type) {
+
         case ICMP_ECHOREPLY:
             t_send_list *elem;
+            
             if (icmphdr->icmp_id != g_icmp.pid || !(elem = set_rtt_time(icmphdr->icmp_seq)))
                 return 0;
+            
             int compare = icmphdr->icmp_cksum;
             icmphdr->icmp_cksum=0;
             if (compare != CheckSum((UCHAR*)icmphdr, sizeof(icmphdr)))
                 return 0;
-            printf("64 bytes from %s (%s): icmp_seq=%d", g_icmp.srvname, dst, icmphdr->icmp_seq);
+            
+            if (sin->sin_addr.s_addr == LOCALHOST_INT_ADDR)
+                printf("64 bytes from 127.0.0.1: icmp_seq=%d", icmphdr->icmp_seq);
+            else
+                printf("64 bytes from %s (%s): icmp_seq=%d", g_icmp.srvname, dst, icmphdr->icmp_seq);
             printf(" ttl=%d time=%.2f ms\n", iphdr->ip_ttl, elem->rtt_time);
             return 1;
 
         case ICMP_DEST_UNREACH:
+
             if (g_icmp.flags & VERB_FLG)
                 printf("64 bytes from %s (%s): icmp_seq=%d Packet filtered : type %u code %u\n", g_icmp.srvname, dst, g_icmp.last_seq, icmphdr->icmp_type, icmphdr->icmp_code);
             else
@@ -58,12 +66,14 @@ static int process_received_packet(const struct iovec iov[2], struct msghdr msg)
             return 0;
 
         case ICMP_TIME_EXCEEDED:
+
             if (g_icmp.flags & VERB_FLG)
                 printf("64 bytes from %s (%s): icmp_seq=%d Time to live exceeded : type %u code %u\n", g_icmp.srvname, dst, g_icmp.last_seq, icmphdr->icmp_type, icmphdr->icmp_code);
             else
                 printf("64 bytes from %s (%s): icmp_seq=%d Time to live exceeded\n", g_icmp.srvname, dst, g_icmp.last_seq);
             g_icmp.error++;
             return 0;
+        
         case ICMP_ECHO:
             return 0;
             

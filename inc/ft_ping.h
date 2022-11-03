@@ -17,7 +17,7 @@
 # define UCHAR unsigned char
 # define USHORT unsigned short
 # define UINT unsigned int
-
+# define LOCALHOST_INT_ADDR 16777343
 # define TTL 64
 
 # define HLP_FLG    1U << 0 
