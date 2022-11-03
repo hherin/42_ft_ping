@@ -85,12 +85,13 @@ static void parse_cmd(char **av)
 
 int main(int ac, char **av)
 {
-    if (ac < 2)
-        str_exit_error("usage error", "Destination address required", 1);
-
+    (void)ac;
     signal(SIGINT, ping_end_signal);
 
     parse_cmd(&av[1]);
+    
+    if (!g_icmp.srvname)
+        str_exit_error("usage error", "Destination address required", 1);
     
     if (g_icmp.flags & HLP_FLG) {
         print_help();
@@ -98,7 +99,7 @@ int main(int ac, char **av)
     }
     server_setup();
     
-    icmp_ping_loop(av[1]);
+    icmp_ping_loop();
     
     freeaddrinfo(g_icmp.adinfo);
     close(g_icmp.sockfd);

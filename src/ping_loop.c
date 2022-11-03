@@ -8,7 +8,7 @@ static void sig_send_handler(int signum)
 }
 
 
-void icmp_ping_loop(char *srcname)
+void icmp_ping_loop()
 {
     signal(SIGALRM, sig_send_handler);
     
@@ -17,7 +17,7 @@ void icmp_ping_loop(char *srcname)
     char dst[INET_ADDRSTRLEN];
     struct sockaddr_in *sin = (struct sockaddr_in*)g_icmp.adinfo->ai_addr;
 
-    printf("PING %s (%s) 56(84) bytes of data.\n", srcname, inet_ntop(AF_INET, &sin->sin_addr, dst, INET_ADDRSTRLEN));
+    printf("PING %s (%s) 56(84) bytes of data.\n", g_icmp.srvname, inet_ntop(AF_INET, &sin->sin_addr, dst, INET_ADDRSTRLEN));
     
     alarm(1);
     do {
