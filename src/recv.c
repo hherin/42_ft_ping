@@ -35,7 +35,7 @@ static int process_received_packet(const struct iovec iov[2], struct msghdr msg)
     char dst[INET_ADDRSTRLEN];
     struct sockaddr_in *sin = (struct sockaddr_in*)(msg.msg_name);
     inet_ntop(AF_INET, &sin->sin_addr, dst, INET_ADDRSTRLEN);
-        
+    
     switch (icmphdr->icmp_type) {
         case ICMP_ECHOREPLY:
             t_send_list *elem;
@@ -63,6 +63,8 @@ static int process_received_packet(const struct iovec iov[2], struct msghdr msg)
             else
                 printf("64 bytes from %s (%s): icmp_seq=%d Time to live exceeded\n", g_icmp.srvname, dst, g_icmp.last_seq);
             g_icmp.error++;
+            return 0;
+        case ICMP_ECHO:
             return 0;
             
     }
