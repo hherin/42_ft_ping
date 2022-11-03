@@ -21,7 +21,6 @@ void str_exit_error(const char *s1, const char *s2)
     fprintf(stderr, "ping: %s: %s\n", s1, s2);
     free_everything();
     exit(1);
-    
 }
 
 void ping_end_signal(int nb)
