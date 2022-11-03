@@ -46,7 +46,7 @@ static int process_received_packet(const struct iovec iov[2], struct msghdr msg)
             if (compare != CheckSum((UCHAR*)icmphdr, sizeof(icmphdr)))
                 return 0;
             printf("64 bytes from %s (%s): icmp_seq=%d", g_icmp.srvname, dst, icmphdr->icmp_seq);
-            printf(" ttl=%d time=%.2fms\n", iphdr->ip_ttl, elem->rtt_time);
+            printf(" ttl=%d time=%.2f ms\n", iphdr->ip_ttl, elem->rtt_time);
             return 1;
 
         case ICMP_DEST_UNREACH:
