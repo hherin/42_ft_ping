@@ -22,13 +22,13 @@ ${OBJ} : ${HDRS}
 
 ${NAME}:	${OBJ}
 			make -C lib
-			gcc ${CFLAG} -o ${NAME} ${OBJ} lib/libftprintf.a
+			gcc ${CFLAG} -o ${NAME} ${OBJ} lib/libft.a
 
 clean:
 			@make clean -C lib
 			@rm -rf src/*.o
 
-fclean:
+fclean:		clean
 			@make fclean -C lib
 			@rm -rf ${NAME}
 

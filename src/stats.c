@@ -30,7 +30,7 @@ t_send_list* set_rtt_time(UINT seq)
     return elem;
 }
 
-float compute_average(void)
+static float compute_average(void)
 {
     t_send_list *tmp = g_icmp.lst.next;
     float sum = 0.0;
@@ -44,6 +44,21 @@ float compute_average(void)
     return sum / total;
 }
 
+static float my_sqrt(const float x)
+{
+    union 
+    {
+        int i;
+        float x;
+    } u;
+    u.x = x;
+    u.i = (1 << 29) + (u.i >> 1) - (1 << 22);
+    u.x = u.x + x / u.x;
+    u.x = 0.25f * u.x + x / u.x;
+
+    return u.x;
+}
+
 float compute_mdev(float avg)
 {
     t_send_list *tmp = g_icmp.lst.next;
@@ -51,13 +66,11 @@ float compute_mdev(float avg)
     int total = 0;
     while (tmp)
     {
-        printf("sum + avg + rtt = %.3f + %.3f - %.3f", sum, avg, tmp->rtt_time);
         sum += (avg - tmp->rtt_time) * (avg - tmp->rtt_time);
-        printf(" = %.3f\n", sum);
         total++;
         tmp = tmp->next;
     }
-    return (float)(sum / total);
+    return my_sqrt(sum / total);
 }
 
 void print_stats(void)
@@ -69,10 +82,14 @@ void print_stats(void)
     
     long time_elapsed = (endtime.tv_sec * 1000 + endtime.tv_usec / 1000)- (g_icmp.stat.ping_start.tv_sec * 1000 + g_icmp.stat.ping_start.tv_usec / 1000);
     int loss = (int)((1 - ((float)g_icmp.stat.received / (float)g_icmp.stat.transmitted)) * 100);
-    printf("%d packets transmitted, %d received, %d%% packet loss, time %ldms\n", g_icmp.stat.transmitted, g_icmp.stat.received, loss, time_elapsed);
+    printf("%d packets transmitted, %d received, ", g_icmp.stat.transmitted, g_icmp.stat.received);
     if (!g_icmp.error) {
+        printf("%d%% packet loss, time %ldms\n", loss, time_elapsed);
         float avg = compute_average();
         float mdev = compute_mdev(avg);
         printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f\n", g_icmp.stat.min, avg, g_icmp.stat.max, mdev);
+    }
+    else {
+        printf("+%d errors, %d%% packet loss, time %ldms\n\n", g_icmp.error, loss, time_elapsed);
     }
 }

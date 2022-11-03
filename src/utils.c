@@ -1,10 +1,27 @@
 #include "../inc/ft_ping.h"
 
-void str_exit_error(char *str)
+void free_everything(void)
 {
-    ft_putstr_fd("ping: usage error: ", 2);
-    ft_putstr_fd(str, 2);
+    if (g_icmp.lst.next) {
+        t_send_list *tmp = g_icmp.lst.next;
+        while (tmp) {
+            t_send_list *remove = tmp;
+            tmp = tmp->next;
+            free(remove);
+        }
+    }
+    if (g_icmp.adinfo)
+        freeaddrinfo(g_icmp.adinfo);
+    if (g_icmp.sockfd > -1)
+        close(g_icmp.sockfd);
+}
+
+void str_exit_error(const char *s1, const char *s2)
+{
+    fprintf(stderr, "ping: %s: %s\n", s1, s2);
+    free_everything();
     exit(1);
+    
 }
 
 void ping_end_signal(int nb)

@@ -17,15 +17,15 @@ t_icmp_echo g_icmp = {
                 .seq = 0,
                 .next = NULL
     },
-    .error = false,
-    .last_seq = 0
+    .error = 0,
+    .last_seq = 0,
+    .flags=0U
 };
 
-void server_setup()
+static void server_setup(void)
 {
     int ttl = TTL;
     g_icmp.pid = getpid();
-    
     
     int retaddrinfo;
     struct addrinfo hints;
@@ -34,26 +34,67 @@ void server_setup()
     hints.ai_socktype = SOCK_RAW;
     hints.ai_protocol = IPPROTO_ICMP;
     hints.ai_flags = 0;
-    if ((retaddrinfo = getaddrinfo(g_icmp.srvname, "", &hints, &(g_icmp.adinfo))) !=  0){
-        fprintf(stderr, "ping: %s: %s\n", g_icmp.srvname, gai_strerror(retaddrinfo));
-        exit(1);
-    }
+    if ((retaddrinfo = getaddrinfo(g_icmp.srvname, "", &hints, &(g_icmp.adinfo))) !=  0)
+        str_exit_error(g_icmp.srvname, gai_strerror(retaddrinfo));
     
-    if ((g_icmp.sockfd = socket(AF_INET, SOCK_RAW, 1)) < 0) {
-        fprintf(stderr, "Error socket: %s\n", strerror(errno));
-        exit(1);
-    }
+    if ((g_icmp.sockfd = socket(AF_INET, SOCK_RAW, 1)) < 0)
+        str_exit_error("internal error", strerror(errno));
+    
     setsockopt(g_icmp.sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
 }
 
+static void print_help(void)
+{
+    printf("\nUsage\n\tping [options] <destination>\n\n");
+    printf("Options:\n \
+    \t<destination>\tdns name r ip address\n \
+    -h\t\tprint help and exit\n \
+    -v\t\tverbose output\n");
+}
+
+static void parse_cmd(char **av)
+{
+    for (int i = 0; av[i]; i++) {
+        if (av[i][0] != '-'){
+            if (g_icmp.srvname)
+                str_exit_error("usage error", "one destination allowed, see help [-h]\n");
+            g_icmp.srvname = av[i];
+        }
+        else {
+            for (int j = 1; av[i][j]; j++) {
+
+                switch (av[i][j]) {
+                    case 'h': 
+                        g_icmp.flags |= HLP_FLG;
+                        break;
+                    case 'v':
+                        g_icmp.flags |= VERB_FLG;
+                        break;
+
+                    default:
+                        break;
+                }
+
+            }
+
+        }
+    }
+}
+
+
 int main(int ac, char **av)
 {
-    if (ac != 2)
-        str_exit_error("Destination address required\n");
+    if (ac < 2)
+        str_exit_error("usage error", "Destination address required\n");
 
     signal(SIGINT, ping_end_signal);
-    g_icmp.srvname = av[1];
 
+    parse_cmd(&av[1]);
+    
+    if (g_icmp.flags & HLP_FLG) {
+        print_help();
+        return 0;
+    }
     server_setup();
     
     icmp_ping_loop(av[1]);

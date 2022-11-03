@@ -1,5 +1,11 @@
 #include "../inc/ft_ping.h"
 
+static void sig_send_handler(int signum)
+{
+    icmp_sendto(g_icmp.sockfd, g_icmp.adinfo, g_icmp.pid);
+    alarm(1);
+    (void)signum;
+}
 
 
 void icmp_ping_loop(char *srcname)
