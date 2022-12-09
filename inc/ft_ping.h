@@ -17,7 +17,7 @@
 # define UCHAR unsigned char
 # define USHORT unsigned short
 # define UINT unsigned int
-# define LOCALHOST_INT_ADDR 16777343
+
 # define TTL 64
 
 # define HLP_FLG    1U << 0 
@@ -62,7 +62,7 @@ typedef struct
 
 extern t_icmp_echo g_icmp;
 
-void icmp_ping_loop();
+void icmp_ping_loop(char *srcname);
 
 void str_exit_error(const char *s1, const char *s2, int exitcode);
 void ping_end_signal(int nb);
